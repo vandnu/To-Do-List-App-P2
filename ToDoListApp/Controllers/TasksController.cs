@@ -29,17 +29,22 @@ namespace ToDoListApp.Controllers
 
         // GET: api/ToDoTasks/8 - Henter en specifik opgave baseret på id
         [HttpGet("{id}")]
-        public async Task<ActionResult<ToDoTask>> GetToDoTask(int id)
+        public async Task<ActionResult<TaskDto>> GetToDoTask(int id)
         {
             var todoTask = await _context.ToDoTasks.FindAsync(id);
+            if (todoTask == null) return NotFound();
 
-            if (todoTask == null)
+            // Mapper ToDoTask til ToDoTaskDto
+            var taskDto = new TaskDto
             {
-                return NotFound();
-            }
+                Id = todoTask.Id,
+                Title = todoTask.Title,
+                IsCompleted = todoTask.IsCompleted
+            };
 
-            return todoTask;
+            return Ok(taskDto);
         }
+
 
         // POST: api/ToDoTasks - Opretter en ny opgave
         [HttpPost]
