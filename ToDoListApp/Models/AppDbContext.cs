@@ -12,6 +12,7 @@ namespace ToDoListApp.Models
         // "Definerer" DbSets for dine tabeller
         public DbSet<ToDoTask> ToDoTasks { get; set; }
         public DbSet<Quote> Quotes { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
