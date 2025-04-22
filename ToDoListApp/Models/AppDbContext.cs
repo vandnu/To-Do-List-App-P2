@@ -18,6 +18,12 @@ namespace ToDoListApp.Models
         {
             base.OnModelCreating(modelBuilder);
 
+            // Relationen mellem ToDoTask og User
+            modelBuilder.Entity<ToDoTask>()
+                .HasOne(t => t.User)          // En ToDoTask har én User
+                .WithMany(u => u.ToDoTasks)   // En User kan have mange ToDoTasks
+                .HasForeignKey(t => t.UserId);
+
             // Eventuelle yderligere konfigurationer her - f.eks. relationer
             // Eksempel: modelBuilder.Entity<ToDoTask>().HasKey(t => t.Id);
         }
