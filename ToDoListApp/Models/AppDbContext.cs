@@ -24,7 +24,7 @@ namespace ToDoListApp.Models
                 .HasOne(t => t.User)          // En ToDoTask har én User
                 .WithMany(u => u.ToDoTasks)   // En User kan have mange ToDoTasks
                 .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.Cascase); // Sletter alt hvad en bruger har af tasks ved sletning af bruger
+                .OnDelete(DeleteBehavior.Cascade); // Sletter alt hvad en bruger har af tasks ved sletning af bruger
 
 
             // Seeding af data
@@ -44,7 +44,7 @@ namespace ToDoListApp.Models
                         PasswordHash = "$2a$11$IsepszmC6snjPcfCcAmo5uctrPqXcLzRRoEVkpywIOw2kG7T./fOu", //Hashet adminKode
                         Role = "Admin",
                         Email = "test@ellernoget.com",
-                        CreatedAt = DateTime.UtcNow
+                        CreatedTime = DateTime.UtcNow
                     }
                 );
 
