@@ -15,7 +15,7 @@ namespace ToDoListApp.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.3");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.4");
 
             modelBuilder.Entity("ToDoListApp.Models.Quote", b =>
                 {
@@ -34,6 +34,20 @@ namespace ToDoListApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Quotes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Author = "V",
+                            Text = "Gør det i dag - det som du ellers kan overveje at udsætte til i morgen!"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Author = "A",
+                            Text = "Små steps/sejre hver dag (mod et større mål) kan føre til store resultater."
+                        });
                 });
 
             modelBuilder.Entity("ToDoListApp.Models.ToDoTask", b =>
@@ -46,7 +60,6 @@ namespace ToDoListApp.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsCompleted")
@@ -94,6 +107,17 @@ namespace ToDoListApp.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedTime = new DateTime(2025, 4, 29, 12, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "test@ellernoget.com",
+                            PasswordHash = "$2a$11$IsepszmC6snjPcfCcAmo5uctrPqXcLzRRoEVkpywIOw2kG7T./fOu",
+                            Role = "Admin",
+                            Username = "admin"
+                        });
                 });
 
             modelBuilder.Entity("ToDoListApp.Models.ToDoTask", b =>

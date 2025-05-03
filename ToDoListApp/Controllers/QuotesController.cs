@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -53,6 +54,7 @@ namespace ToDoListApp.Controllers
 
         // PUT: api/Quotes/5 - Opdaterer et eksisterende citat
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PutQuote(int id, Quote quote)
         {
             if (id != quote.Id)
@@ -83,6 +85,7 @@ namespace ToDoListApp.Controllers
 
         // DELETE: api/Quotes/5 - Sletter et citat
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteQuote(int id)
         {
             var quote = await _context.Quotes.FindAsync(id);

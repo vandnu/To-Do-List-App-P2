@@ -26,6 +26,10 @@ namespace ToDoListApp.Models
                 .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade); // Sletter alt hvad en bruger har af tasks ved sletning af bruger
 
+            // Gør Description valgfri
+            modelBuilder.Entity<ToDoTask>()
+                .Property(t => t.Description)
+                .IsRequired(false);
 
             // Seeding af data
             modelBuilder.Entity<Quote>()
@@ -34,7 +38,7 @@ namespace ToDoListApp.Models
                     new Quote { Id = 2, Text = "Små steps/sejre hver dag (mod et større mål) kan føre til store resultater.", Author = "A"}
                 );
 
-            // "Seeding?" af admin-bruger
+            // Seeding af admin-bruger
             modelBuilder.Entity<User>()
                 .HasData(
                     new User
@@ -44,7 +48,7 @@ namespace ToDoListApp.Models
                         PasswordHash = "$2a$11$IsepszmC6snjPcfCcAmo5uctrPqXcLzRRoEVkpywIOw2kG7T./fOu", //Hashet adminKode
                         Role = "Admin",
                         Email = "test@ellernoget.com",
-                        CreatedTime = DateTime.UtcNow
+                        CreatedTime = new DateTime(2025, 4, 29, 12, 0, 0, DateTimeKind.Utc)
                     }
                 );
 

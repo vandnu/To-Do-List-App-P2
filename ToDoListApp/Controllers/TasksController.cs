@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ToDoListApp.Models;
+using ToDoListApp.DTOs;
 
 namespace ToDoListApp.Controllers
 {
@@ -65,7 +66,10 @@ namespace ToDoListApp.Controllers
             var todoTask = await _context.ToDoTasks
                 .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
-            if (todoTask == null) return NotFound();
+            if (todoTask == null)
+            {
+                return Forbid("You do not have permission to access this task.");
+            }
 
             var taskDto = new TaskDto
             {

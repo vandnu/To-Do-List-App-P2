@@ -1,6 +1,9 @@
-public class TaskDto
+namespace ToDoListApp.DTOs
 {
-    public int Id { get; set; }
-    public string Title { get; set; }
-    public bool IsCompleted { get; set; } // De vigtigste data?
+    public class TaskDto
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public bool IsCompleted { get; set; } // De vigtigste data?
+    }
 }
