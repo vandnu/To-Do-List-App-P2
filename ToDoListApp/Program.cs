@@ -43,6 +43,17 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// Tilføj CORS som bruges til at tillade anmodninger fra React
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactFrontend", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000") // React's standardport
+               .AllowAnyHeader()
+               .AllowAnyMethod();
+    });
+});
+
 //DbContext med SQL (LITE) configuraiton
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -84,6 +95,8 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
+app.UseCors("AllowReactFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
