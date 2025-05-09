@@ -44,6 +44,7 @@ namespace api.Controllers
 
         // POST: api/Quotes - Opretter et nyt citat
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<Quote>> PostQuote(Quote quote)
         {
             _context.Quotes.Add(quote);
