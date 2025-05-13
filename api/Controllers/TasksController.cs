@@ -131,8 +131,8 @@ namespace api.Controllers
         }
 
         // DELETE: api/ToDoTasks/5 - Sletter en opgave
-        [Authorize]
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteToDoTask(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);

@@ -48,7 +48,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactFrontend", builder =>
     {
-        builder.WithOrigins("http://localhost:3000") // React's standardport
+        builder.WithOrigins("http://localhost:5173") // Vites port
                .AllowAnyHeader()
                .AllowAnyMethod();
     });
