@@ -102,49 +102,77 @@ namespace api.Controllers
         }
 
         // PUT: api/ToDoTasks/5 - Opdaterer en eksisterende opgave
-        [Authorize]
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutToDoTask(int id, TaskDto taskDto)
+        [Authorize]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] ToDoTask updatedTask)
         {
-            if (id != taskDto.Id) return BadRequest();
-
+            // Hent brugerens ID og rolle fra JWT-tokenet
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var todoTask = await _context.ToDoTasks
-                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            if (todoTask == null) return NotFound();
+            // Find opgaven
+            ToDoTask? todoTask;
 
-            todoTask.Title = taskDto.Title;
-            todoTask.IsCompleted = taskDto.IsCompleted;
-
-            try
+            if (userRole == "Admin")
             {
-                await _context.SaveChangesAsync();
+                // Admin kan opdatere alle opgaver
+                todoTask = await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id);
             }
-            catch (DbUpdateConcurrencyException)
+            else
             {
-                if (!ToDoTaskExists(id)) return NotFound();
-                else throw;
+                // Almindelige brugere kan kun opdatere deres egne opgaver
+                todoTask = await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
             }
 
-            return NoContent();
+            // Tjek, om opgaven findes
+            if (todoTask == null)
+            {
+                return NotFound("Task not found or you don't have permission to update it.");
+            }
+
+            // Opdater opgaven
+            todoTask.Title = updatedTask.Title;
+            todoTask.Description = updatedTask.Description;
+            todoTask.IsCompleted = updatedTask.IsCompleted;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(todoTask);
         }
-
         // DELETE: api/ToDoTasks/5 - Sletter en opgave
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteToDoTask(int id)
+        [Authorize]
+        public async Task<IActionResult> DeleteTask(int id)
         {
+            // Hent brugerens ID og rolle fra JWT-tokenet
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var todoTask = await _context.ToDoTasks
-                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            if (todoTask == null) return NotFound();
+            // Find opgaven
+            ToDoTask? todoTask;
 
+            if (userRole == "Admin")
+            {
+                // Admin kan slette alle opgaver
+                todoTask = await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id);
+            }
+            else
+            {
+                // Almindelige brugere kan kun slette deres egne opgaver
+                todoTask = await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            }
+
+            // Tjek, om opgaven findes
+            if (todoTask == null)
+            {
+                return NotFound("Task not found or you don't have permission to delete it.");
+            }
+
+            // Slet opgaven
             _context.ToDoTasks.Remove(todoTask);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok("Task deleted successfully.");
         }
 
         private bool ToDoTaskExists(int id)
