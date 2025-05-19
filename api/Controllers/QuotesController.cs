@@ -53,7 +53,7 @@ namespace api.Controllers
             return CreatedAtAction("GetQuote", new { id = quote.Id }, quote);
         }
 
-        // PUT: api/Quotes/5 - Opdaterer et eksisterende citat
+        // PUT: api/Quotes/8 - Opdaterer et eksisterende citat
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> PutQuote(int id, Quote quote)
@@ -84,7 +84,7 @@ namespace api.Controllers
             return NoContent();
         }
 
-        // DELETE: api/Quotes/5 - Sletter et citat
+        // DELETE: api/Quotes/8 - Sletter et citat
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteQuote(int id)
