@@ -33,7 +33,8 @@ namespace api.Controllers
                 {
                     Id = t.Id,
                     Title = t.Title,
-                    IsCompleted = t.IsCompleted
+                    IsCompleted = t.IsCompleted,
+                    Description = t.Description
                 })
                 .ToListAsync();
 
@@ -50,7 +51,8 @@ namespace api.Controllers
                 {
                     Id = t.Id,
                     Title = t.Title,
-                    IsCompleted = t.IsCompleted
+                    IsCompleted = t.IsCompleted,
+                    Description = t.Description
                 })
                 .ToListAsync();
 
@@ -75,7 +77,8 @@ namespace api.Controllers
             {
                 Id = todoTask.Id,
                 Title = todoTask.Title,
-                IsCompleted = todoTask.IsCompleted
+                IsCompleted = todoTask.IsCompleted,
+                Description = todoTask.Description
             };
 
             return Ok(taskDto);
@@ -90,6 +93,7 @@ namespace api.Controllers
             var todoTask = new ToDoTask
             {
                 Title = taskDto.Title,
+                Description = taskDto.Description,
                 IsCompleted = taskDto.IsCompleted,
                 UserId = userId
             };

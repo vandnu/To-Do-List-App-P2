@@ -1,52 +1,115 @@
 import React, { useState, useEffect } from "react";
-import { createTask, getMyTasks } from "../api/tasks";
+import axios from "axios";
 import { useAuthStore } from "../store/authStore";
+import { useNavigate } from "react-router-dom";
+
+interface Task {
+  id: number;
+  title: string;
+  description?: string;
+  isCompleted: boolean;
+  userId?: number; // Tilføjet for at tjekke ejerskab
+}
 
 const TaskList: React.FC = () => {
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const { token } = useAuthStore();
+  const { token, role, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const userId = parseInt(localStorage.getItem("userId") || "0"); // Hent userId fra localStorage
 
   const fetchTasks = async () => {
     if (!token) return;
     try {
-      const data = await getMyTasks(token);
-      setTasks(data);
+      const url = role === "Admin" ? "/api/ToDoTasks/all-tasks" : "/api/ToDoTasks/my-tasks";
+      const response = await axios.get(`https://localhost:7100${url}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTasks(response.data);
     } catch (err) {
       console.error("Failed to fetch tasks", err);
     }
   };
 
-  useEffect(() => {
-    fetchTasks();
-  }, [token]);
+  const updateTaskCompletion = async (taskId: number, isCompleted: boolean) => {
+    if (!token) return;
+    const taskToUpdate = tasks.find((t) => t.id === taskId);
+    if (!taskToUpdate) return;
+
+    // Tjek tilladelse: Admin kan alt, almindelig bruger kun sine egne
+    if (role !== "Admin" && taskToUpdate.userId !== userId) {
+      console.error("Du har ikke tilladelse til at ændre denne opgave.");
+      return;
+    }
+
+    console.log("Updating task - Task ID:", taskId, "Is Completed:", isCompleted);
+    try {
+      const response = await axios.put(
+        `https://localhost:7100/api/ToDoTasks/${taskId}`,
+        { id: taskId, title: taskToUpdate.title, description: taskToUpdate.description, isCompleted },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("Update response:", response.data);
+      fetchTasks();
+    } catch (err) {
+      console.error("Failed to update task", err);
+    }
+  };
+
+  const deleteTask = async (taskId: number) => {
+    if (!token) return;
+    if (role !== "Admin") {
+      console.error("Kun admin kan slette opgaver.");
+      return;
+    }
+    try {
+      await axios.delete(`https://localhost:7100/api/ToDoTasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Task deleted:", taskId);
+      fetchTasks();
+    } catch (err) {
+      console.error("Failed to delete task", err);
+    }
+  };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) return;
     try {
-      await createTask(title, description || null, token);
+      await axios.post(
+        "https://localhost:7100/api/ToDoTasks",
+        { title, description: description || null, isCompleted: false },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setTitle("");
       setDescription("");
-      fetchTasks(); // Opdater listen
+      fetchTasks();
     } catch (err) {
       console.error("Failed to create task", err);
     }
   };
 
+  useEffect(() => {
+    fetchTasks();
+  }, [token, role]);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <div>
-      <h2>My Tasks</h2>
+      <div>
+        <h2>{role === "Admin" ? "Alle opgaver" : "Mine opgaver"}</h2>
+        <button onClick={handleLogout}>Log ud</button>
+      </div>
       <form onSubmit={handleCreateTask}>
         <div>
           <label>Title:</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </div>
         <div>
           <label>Description (optional):</label>
@@ -61,13 +124,29 @@ const TaskList: React.FC = () => {
       <ul>
         {tasks.map((task) => (
           <li key={task.id}>
-            {task.title} {task.description && `(${task.description})`} -{" "}
-            {task.isCompleted ? "Completed" : "Not Completed"}
+            <h3>{task.title}</h3>
+            <p>{task.description || "Ingen beskrivelse"}</p>
+            <label>
+              <input
+                type="checkbox"
+                checked={task.isCompleted}
+                onChange={(e) => updateTaskCompletion(task.id, e.target.checked)}
+              />
+              {task.isCompleted ? "Completed" : "Not Completed"}
+            </label>
+            {role === "Admin" && (
+              <button
+                onClick={() => deleteTask(task.id)}
+                style={{ marginLeft: "10px", backgroundColor: "red", color: "white", padding: "5px" }}
+              >
+                Slet
+              </button>
+            )}
           </li>
         ))}
       </ul>
-    </div>
-  );
-};
+      </div>
+    );
+  };
 
 export default TaskList;
