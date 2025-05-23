@@ -34,8 +34,11 @@ const LoginForm: React.FC = () => {
     e.preventDefault();
     try {
       const token = await login(username, password);
-      const role = username.toLowerCase() === "admin" ? "Admin" : "User";
-      setAuth(token, role);
+      // Dekodér JWT-token for at hente role
+      const payload = token.split(".")[1];
+      const decoded = JSON.parse(atob(payload));
+      const role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      setAuth(token, role); // Kalder login fra useAuthStore, som også dekoder userId
       navigate("/tasks");
     } catch (err) {
       setError("Ugyldig brugernavn eller adgangskode");

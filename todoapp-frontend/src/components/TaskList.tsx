@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useAuthStore } from "../store/authStore";
 import { useNavigate } from "react-router-dom";
 
@@ -8,16 +8,23 @@ interface Task {
   title: string;
   description?: string;
   isCompleted: boolean;
-  userId?: number; // Tilføjet for at tjekke ejerskab
+  userId: number;
 }
 
 const TaskList: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const { token, role, logout } = useAuthStore();
+  const { token, role, userId, logout } = useAuthStore(); // Hent userId fra store
   const navigate = useNavigate();
-  const userId = parseInt(localStorage.getItem("userId") || "0"); // Hent userId fra localStorage
+
+  // Valider at userId er der
+  if (!userId) {
+    console.error("UserId is not available. Logging out...");
+    logout();
+    navigate("/login");
+    return null;
+  }
 
   const fetchTasks = async () => {
     if (!token) return;
@@ -36,24 +43,29 @@ const TaskList: React.FC = () => {
     if (!token) return;
     const taskToUpdate = tasks.find((t) => t.id === taskId);
     if (!taskToUpdate) return;
-
-    // Tjek tilladelse: Admin kan alt, almindelig bruger kun sine egne
-    if (role !== "Admin" && taskToUpdate.userId !== userId) {
-      console.error("Du har ikke tilladelse til at ændre denne opgave.");
-      return;
-    }
-
-    console.log("Updating task - Task ID:", taskId, "Is Completed:", isCompleted);
+  
+    //console.log("Attempting to update task", taskId, "to isCompleted:", isCompleted);
     try {
-      const response = await axios.put(
-        `https://localhost:7100/api/ToDoTasks/${taskId}`,
-        { id: taskId, title: taskToUpdate.title, description: taskToUpdate.description, isCompleted },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await axios.patch(
+        `https://localhost:7100/api/ToDoTasks/${taskId}/complete`,
+        isCompleted, // Send boolean som JSON
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json" // Tilføj Content-Type
+          }
+        }
       );
-      console.log("Update response:", response.data);
+      console.log("Update successful, response:", response.data);
+      setTasks(tasks.map(task => task.id === taskId ? { ...task, isCompleted } : task));
       fetchTasks();
-    } catch (err) {
-      console.error("Failed to update task", err);
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        console.error("Failed to update task", err.response?.status, err.response?.data);
+      } else {
+        console.error("Unexpected error:", err);
+      }
+      setTasks(tasks.map(task => task.id === taskId ? { ...task, isCompleted: !isCompleted } : task));
     }
   };
 
