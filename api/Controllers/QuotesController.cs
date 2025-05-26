@@ -23,9 +23,16 @@ namespace api.Controllers
 
         // GET: api/Quotes - Henter alle citater
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Quote>>> GetQuotes()
+        public async Task<ActionResult<IEnumerable<Quote>>> GetQuotes([FromQuery] string? author)
         {
-            return await _context.Quotes.ToListAsync();
+            IQueryable<Quote> query = _context.Quotes;
+
+            if (!string.IsNullOrEmpty(author))
+            {
+                query = query.Where(q => q.Author == author);
+            }
+
+                return await query.ToListAsync();
         }
 
         // GET: api/Quotes/8 - Henter et specifikt citat baseret på id

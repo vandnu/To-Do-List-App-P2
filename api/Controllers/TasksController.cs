@@ -21,7 +21,7 @@ namespace api.Controllers
             _context = context;
         }
 
-        // GET: api/ToDoTasks/my-tasks - Henter brugerens opgaver
+        // GET: api/ToDoTasks/my-tasks
         [Authorize]
         [HttpGet("my-tasks")]
         public async Task<ActionResult<IEnumerable<TaskDto>>> GetMyTasks()
@@ -35,13 +35,14 @@ namespace api.Controllers
                     Title = t.Title,
                     IsCompleted = t.IsCompleted,
                     Description = t.Description,
-                    UserId = t.UserId
+                    UserId = t.UserId,
+                    Deadline = t.Deadline
                 })
                 .ToListAsync();
-
             return Ok(tasks);
         }
 
+        // GET: api/ToDoTasks/all-tasks
         [Authorize(Roles = "Admin")]
         [HttpGet("all-tasks")]
         public async Task<ActionResult<IEnumerable<TaskDto>>> GetAllTasks()
@@ -53,25 +54,35 @@ namespace api.Controllers
                     Title = t.Title,
                     IsCompleted = t.IsCompleted,
                     Description = t.Description,
-                    UserId = t.UserId
+                    UserId = t.UserId,
+                    Deadline = t.Deadline
                 })
                 .ToListAsync();
-
             return Ok(tasks);
         }
 
-        // GET: api/ToDoTasks/8 - Henter en specifik opgave baseret på id
+        // GET: api/ToDoTasks/{id}
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<TaskDto>> GetToDoTask(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            var todoTask = await _context.ToDoTasks
-                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            ToDoTask? todoTask;
+
+            if (userRole == "Admin")
+            {
+                todoTask = await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id);
+            }
+            else
+            {
+                todoTask = await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            }
 
             if (todoTask == null)
             {
-                return Forbid("You do not have permission to access this task.");
+                return NotFound("Task not found or you don't have permission to access this task.");
             }
 
             var taskDto = new TaskDto
@@ -79,57 +90,97 @@ namespace api.Controllers
                 Id = todoTask.Id,
                 Title = todoTask.Title,
                 IsCompleted = todoTask.IsCompleted,
-                Description = todoTask.Description
+                Description = todoTask.Description,
+                UserId = todoTask.UserId,
+                Deadline = todoTask.Deadline
             };
-
             return Ok(taskDto);
         }
 
-        // POST: api/ToDoTasks - Opretter en ny opgave
+        // POST: api/ToDoTasks
         [Authorize]
         [HttpPost]
         public async Task<ActionResult<TaskDto>> PostToDoTask(TaskDto taskDto)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            
+            // Opretter ToDoTask (model) fra TaskDto
             var todoTask = new ToDoTask
             {
                 Title = taskDto.Title,
                 Description = taskDto.Description,
                 IsCompleted = taskDto.IsCompleted,
-                UserId = userId
+                UserId = userId,
+                Deadline = taskDto.Deadline
+
             };
 
             _context.ToDoTasks.Add(todoTask);
             await _context.SaveChangesAsync();
 
-            taskDto.Id = todoTask.Id;
-            return CreatedAtAction(nameof(GetToDoTask), new { id = todoTask.Id }, taskDto);
+            var createdTaskDto = new TaskDto
+            {
+                Id = todoTask.Id,
+                Title = todoTask.Title,
+                Description = todoTask.Description,
+                IsCompleted = todoTask.IsCompleted,
+                UserId = todoTask.UserId,
+                Deadline = todoTask.Deadline
+
+            };
+            return CreatedAtAction(nameof(GetToDoTask), new { id = todoTask.Id }, createdTaskDto);
         }
 
-        // PUT: api/ToDoTasks/5 - Opdaterer en eksisterende opgave
+        // PUT: api/ToDoTasks/{id}
         [HttpPut("{id}")]
         [Authorize]
-        public async Task<IActionResult> UpdateTask(int id, [FromBody] ToDoTask updatedTask)
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskDto updatedTaskDto) // Modtager nu TaskDto
         {
-        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-        var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 
-        ToDoTask? todoTask = userRole == "Admin"
-            ? await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id)
-            : await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+            ToDoTask? todoTask = userRole == "Admin"
+                ? await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id)
+                : await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
-        if (todoTask == null)
-            return NotFound("Task not found or you don't have permission to update it.");
+            if (todoTask == null)
+            {
+                return NotFound("Task not found or you don't have permission to update it.");
+            }
 
-        // Opdater kun de felter, der er sendt
-        if (updatedTask.Title != null) todoTask.Title = updatedTask.Title;
-        if (updatedTask.Description != null) todoTask.Description = updatedTask.Description;
-        todoTask.IsCompleted = updatedTask.IsCompleted; // IsCompleted er påkrævet
 
-        await _context.SaveChangesAsync();
-        return Ok(todoTask);
+            if (id != updatedTaskDto.Id)
+            {
+                 return BadRequest("ID mismatch between URL and task data.");
+            }
+
+            // Opdatér felterne på den fundne database-entitet
+            todoTask.Title = updatedTaskDto.Title;
+            todoTask.Description = updatedTaskDto.Description;
+            todoTask.IsCompleted = updatedTaskDto.IsCompleted;
+            todoTask.Deadline = updatedTaskDto.Deadline;
+
+            _context.Entry(todoTask).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ToDoTaskExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return NoContent();
         }
 
+        // PATCH: api/ToDoTasks/{id}/complete
         [HttpPatch("{id}/complete")]
         [Authorize]
         public async Task<IActionResult> UpdateTaskCompletion(int id, [FromBody] bool isCompleted)
@@ -142,44 +193,49 @@ namespace api.Controllers
                 : await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
             if (todoTask == null)
+            {
                 return NotFound("Task not found or you don't have permission to update it.");
+            }
 
             todoTask.IsCompleted = isCompleted;
             await _context.SaveChangesAsync();
-            return Ok(todoTask);
+            
+            // Returner den opdaterede task som DTO
+            var updatedDto = new TaskDto {
+                Id = todoTask.Id,
+                Title = todoTask.Title,
+                Description = todoTask.Description,
+                IsCompleted = todoTask.IsCompleted,
+                Deadline = todoTask.Deadline,
+                UserId = todoTask.UserId
+                // ... andre felter ...
+            };
+            return Ok(updatedDto);
         }
 
-
-        // DELETE: api/ToDoTasks/5 - Sletter en opgave
+        // DELETE: api/ToDoTasks/{id}
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            // Hent brugerens ID og rolle fra JWT-tokenet
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-            // Find opgaven
             ToDoTask? todoTask;
 
             if (userRole == "Admin")
             {
-                // Admin kan slette alle opgaver
                 todoTask = await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id);
             }
             else
             {
-                // Almindelige brugere kan kun slette deres egne opgaver
                 todoTask = await _context.ToDoTasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
             }
 
-            // Tjek, om opgaven findes
             if (todoTask == null)
             {
                 return NotFound("Task not found or you don't have permission to delete it.");
             }
 
-            // Slet opgaven
             _context.ToDoTasks.Remove(todoTask);
             await _context.SaveChangesAsync();
 

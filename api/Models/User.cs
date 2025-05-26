@@ -13,8 +13,9 @@ namespace api.Models
         [Required]
         public string Role { get; set; } // "User" eller "Admin"
         [Required]
-        public string Email { get; set;}
+        public string Email { get; set; }
         public DateTime CreatedTime { get; set; }
+        public string? favoriteMotivator {get; set; }
 
         //ToDoTasks for specifik bruger
 

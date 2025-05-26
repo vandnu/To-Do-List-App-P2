@@ -37,7 +37,8 @@ namespace api.Controllers
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(register.Password),
                 Role = "User",
                 Email = register.Email,
-                CreatedTime = DateTime.UtcNow
+                CreatedTime = DateTime.UtcNow,
+                favoriteMotivator = register.favoriteMotivator
             };
 
             _context.Users.Add(user);
@@ -55,7 +56,7 @@ namespace api.Controllers
             if (user != null && BCrypt.Net.BCrypt.Verify(login.Password, user.PasswordHash))
             {
                 var token = GenerateJwtToken(user);
-                return Ok(new { token });
+                return Ok(new { token, role = user.Role, userId = user.Id, favoriteMotivator = user.favoriteMotivator});
             }
 
             return Unauthorized("Invalid username or password");
@@ -89,6 +90,7 @@ namespace api.Controllers
         public string Username { get; set; }
         public string Password { get; set; }
         public string Email { get; set; }
+        public string? favoriteMotivator {get; set; }
     }
 
     public class LoginDto

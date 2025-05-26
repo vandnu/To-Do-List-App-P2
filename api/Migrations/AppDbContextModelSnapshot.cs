@@ -47,6 +47,84 @@ namespace api.Migrations
                             Id = 2,
                             Author = "A",
                             Text = "Små steps/sejre hver dag (mod et større mål) kan føre til store resultater."
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Author = "Steve Jobs",
+                            Text = "The only way to do great work is to love what you do."
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Author = "Albert Einstein",
+                            Text = "Strive not to be a success, but rather to be of value."
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Author = "Steve Jobs",
+                            Text = "Your time is limited, so don’t waste it living someone else’s life."
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Author = "Buddha",
+                            Text = "The mind is everything. What you think you become."
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Author = "Peter Drucker",
+                            Text = "The best way to predict the future is to create it."
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Author = "Winston Churchill",
+                            Text = "Success is not final, failure is not fatal: It is the courage to continue that counts."
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Author = "Theodore Roosevelt",
+                            Text = "Believe you can and you're halfway there."
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Author = "William James",
+                            Text = "Act as if what you do makes a difference. It does."
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Author = "Confucius",
+                            Text = "It does not matter how slowly you go as long as you do not stop."
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Author = "Eleanor Roosevelt",
+                            Text = "The future belongs to those who believe in the beauty of their dreams."
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Author = "William Butler Yeats",
+                            Text = "Do not wait to strike till the iron is hot; but make it hot by striking."
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Author = "Walt Whitman",
+                            Text = "Keep your face always toward the sunshine, and shadows will fall behind you."
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Author = "Ralph Waldo Emerson",
+                            Text = "What lies behind us and what lies before us are tiny matters compared to what lies within us."
                         });
                 });
 
@@ -102,6 +180,9 @@ namespace api.Migrations
 
                     b.Property<string>("Username")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("favoriteMotivator")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
